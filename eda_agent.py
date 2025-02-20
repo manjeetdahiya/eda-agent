@@ -33,9 +33,7 @@ tools = [{
                     "description": "Python code as string"
                 }
             },
-            "required": [
-                "code_str"
-            ],
+            "required": ["code_str"],
             "additionalProperties": False
         },
         "strict": True
@@ -58,6 +56,17 @@ def print_msg(msg):
     if content:
         print(f'\n{role.title()}: {content}')
 
+def call_llm_and_append_msg_list(client, messages):
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        messages=messages,
+        tools=tools,
+    )
+    messages.append(response.choices[0].message)
+    print_msg(messages[-1])
+    return messages, response
+
 def conversation_loop():
     print('\n\nWelcome to data analysis agent!\n-------------------------------')
     client = OpenAI()
@@ -73,37 +82,21 @@ def conversation_loop():
             print('Exiting')
             break
         messages.append(create_message('user', user_text))
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            temperature=0,
-            messages=messages,
-            tools=tools,
-        )
-        messages.append(response.choices[0].message)
-        print_msg(messages[-1])
+        messages, response = call_llm_and_append_msg_list(client, messages)
         
         if response.choices[0].finish_reason == 'tool_calls':
             tool_call = response.choices[0].message.tool_calls[0]
             function_name = tool_call.function.name
-            arguments_str = tool_call.function.arguments
-            arguments = json.loads(arguments_str)
+            arguments = json.loads(tool_call.function.arguments)
             if function_name == "run_python_code":
                 try:
                     result = run_python_code(**arguments)
                 except Exception as e:
                     print(e)
                     result = 'Exception\n' + str(e)
-                msg = create_message('tool', str(result), tool_call_id=tool_call.id, name=function_name)
-                messages.append(msg)
+                messages.append(create_message('tool', str(result), tool_call_id=tool_call.id, name=function_name))
                 print_msg(messages[-1])
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    temperature=0,
-                    messages=messages,
-                    tools=tools,
-                )
-                messages.append(response.choices[0].message)
-                print_msg(messages[-1])
+                messages, _ = call_llm_and_append_msg_list(client, messages)
             else:
                 print(f"Unknown function: {function_name}")
 
