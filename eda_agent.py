@@ -1,16 +1,29 @@
 from openai import OpenAI
 import json
+import os
 
 system_prompt = '''
 You are an assistant that does exploratory data anaysis for data scientists, 
 machine learning engineers and data analysts.
 
 You will be given some programming or analysis task and you have to complete that.
-You goal will be to write a Python code and execute it and then return the results to the user.
-Use the run_python_code tool when needed.
+You goal will be to generate a Python code and execute it and then return the results to the user.
+You are supposed to use the tool `run_python_code` provided.
 
 Note that there is no possiblity of uploading any file. One has to look for local files only.
 '''
+
+client = OpenAI()
+def call_llm_and_append_msg_list(messages):
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        messages=messages,
+        tools=tools,
+    )
+    messages.append(response.choices[0].message)
+    print_msg(messages[-1])
+    return messages, response
 
 exec_locals = {}
 
@@ -56,20 +69,8 @@ def print_msg(msg):
     if content:
         print(f'\n{role.title()}: {content}')
 
-def call_llm_and_append_msg_list(client, messages):
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        messages=messages,
-        tools=tools,
-    )
-    messages.append(response.choices[0].message)
-    print_msg(messages[-1])
-    return messages, response
-
 def conversation_loop():
     print('\n\nWelcome to data analysis agent!\n-------------------------------')
-    client = OpenAI()
     messages = [
         create_message('system', system_prompt),
         create_message('assistant', 'How can I help you with data analysis today?')
@@ -82,7 +83,7 @@ def conversation_loop():
             print('Exiting')
             break
         messages.append(create_message('user', user_text))
-        messages, response = call_llm_and_append_msg_list(client, messages)
+        messages, response = call_llm_and_append_msg_list(messages)
         
         if response.choices[0].finish_reason == 'tool_calls':
             tool_call = response.choices[0].message.tool_calls[0]
@@ -96,7 +97,7 @@ def conversation_loop():
                     result = 'Exception\n' + str(e)
                 messages.append(create_message('tool', str(result), tool_call_id=tool_call.id, name=function_name))
                 print_msg(messages[-1])
-                messages, _ = call_llm_and_append_msg_list(client, messages)
+                messages, _ = call_llm_and_append_msg_list(messages)
             else:
                 print(f"Unknown function: {function_name}")
 
