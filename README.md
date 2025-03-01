@@ -10,4 +10,4 @@ Steps to run:
 
 # Example Session
 
-[docs/img/eda-agent-1.png]
+![example session](docs/img/eda-agent-1.png)
