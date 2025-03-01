@@ -7,3 +7,7 @@ Steps to run:
 
 # Dependencies
 `pip install openai os pandas json`
+
+# Example Session
+
+[docs/img/eda-agent-1.png]
