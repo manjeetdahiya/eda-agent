@@ -1,4 +1,4 @@
-# eda-agent
+# EDA Agent
 Agent for exploratory data analysis
 
 Steps to run:
