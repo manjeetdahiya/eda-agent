@@ -11,3 +11,7 @@ Steps to run:
 # Example Session
 
 ![example session](docs/img/eda-agent-1.png)
+
+![example session](docs/img/eda-agent-2.png)
+
+![example session](docs/img/eda-agent-3.png)
