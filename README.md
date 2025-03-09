@@ -1,4 +1,4 @@
-# EDA Agent
+# Data Science Agent
 Data Science Agent for exploratory data analysis
 
 Steps to run:
